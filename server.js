@@ -16,7 +16,7 @@ app.use(express.static("public"));
 
 //app.use(bodyParser.json())
 
-app.get("/home", (req, res) => {
+app.get("/", (req, res) => {
   res.render("index.ejs");
 });
 
