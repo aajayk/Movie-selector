@@ -1,82 +1,67 @@
-console.log("Launching it  !!!")
+console.log("Launching it  !!!");
 
-
-require('dotenv').config()
-const express = require('express');
-var bodyParser = require('body-parser');
-const fs = require('fs')
-const random = require('random')
-
-
+require("dotenv").config();
+const express = require("express");
+var bodyParser = require("body-parser");
+const fs = require("fs");
+const random = require("random");
 
 const app = express();
 
-const users =[];
+const users = [];
 
-app.use(bodyParser.urlencoded({ extended: true } ))
-app.set('view-engine','ejs')
+app.use(bodyParser.urlencoded({ extended: true }));
+app.set("view-engine", "ejs");
 app.use(express.static("public"));
-
-
 
 //app.use(bodyParser.json())
 
-app.get('/home',(req,res)=>{
+app.get("/home", (req, res) => {
+  res.render("index.ejs");
+});
 
- res.render('index.ejs')
+app.get("/movie", (req, res) => {
+  var rand = random.int((min = 0), (max = 300));
+  var imageUrl;
 
-})
+  fs.readFile("top_rated.json", function (err, data) {
+    var jsonData = JSON.parse(data);
+    console.log("data:" + jsonData.results.length + "random : " + rand);
 
-app.get('/movie',(req,res)=>{
+    console.log(
+      jsonData.results[rand].element +
+        jsonData.results[rand].element.poster_path
+    );
+    imageUrl =
+      "http://image.tmdb.org/t/p/w185/" +
+      jsonData.results[rand].element.poster_path;
 
-    var rand = random.int(min = 0, max = 300)
-    var imageUrl;
+    // res.send(jsonData.results[rand].element)
+    res.render("response.ejs", {
+      name: jsonData.results[rand].element.title,
+      ratings: jsonData.results[rand].element.vote_average,
+      desc: jsonData.results[rand].element.overview,
+      imgpath: imageUrl,
+      release_date: jsonData.results[rand].element.release_date,
+    });
+  });
+});
 
-    fs.readFile('top_rated.json', function (err, data) {
-        var jsonData = JSON.parse(data)
-        console.log('data:'+jsonData.results.length+"random : "+rand)
+app.post("/register", async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    users.push({
+      id: Date.now().toString(),
+      name: req.body.name,
+      email: req.body.email,
+      password: hashedPassword,
+    });
 
-        console.log(jsonData.results[rand].element+jsonData.results[rand].element.poster_path) 
-        imageUrl='http://image.tmdb.org/t/p/w185/'+jsonData.results[rand].element.poster_path
-         
-    
-   // res.send(jsonData.results[rand].element)
-    res.render('response.ejs',{
-        name:jsonData.results[rand].element.title,
-        ratings:jsonData.results[rand].element.vote_average,
-        desc:jsonData.results[rand].element.overview,
-        imgpath:imageUrl,
-        release_date:jsonData.results[rand].element.release_date
+    console.log(users);
+    res.redirect("/login");
+  } catch {
+    res.redirect("/register");
+  }
+});
 
-    })
-        
-     })
-
-
-
-})
-
-
-app.post('/register',async (req,res) => {
-
-    try {
-        const hashedPassword = await bcrypt.hash(req.body.password, 10);
-        users.push({
-            id: Date.now().toString(),
-            name: req.body.name,
-            email:req.body.email,
-            password:hashedPassword
-        })
-        
-        console.log(users)
-        res.redirect('/login')
-    } catch {
-        res.redirect('/register')
-    }
-
-
-})
-
-
-
-app.listen(3000)
+app.listen(process.env.PORT || 3000);
